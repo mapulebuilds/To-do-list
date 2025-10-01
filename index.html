@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .welcome-section {
+      flex-grow: 1;
+    }
+    .welcome-section h2 {
+      margin: 0;
+      color: #2c3e50;
+      font-size: 1.8em;
+    }
+    .username-highlight {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .today-date {
+      margin: 5px 0 0 0;
+      color: #666;
+      font-size: 1.1em;
+    }
+    .task-type-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 0 10px;
+    }
+    .task-type-btn {
+      flex: 1;
+      padding: 12px;
+      font-size: 1.1em;
+      background: #f8f9fa;
+      color: #495057;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .task-type-btn:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
+    }
+    .task-type-btn.active {
+      background: #4CAF50;
+      color: white;
+      border-color: #4CAF50;
+    }
+    .logout-btn {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .task-input-container {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .task-input-group {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+    }
+    input, select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .search-box {
+      flex-grow: 1;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background: #f8f8f8;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.done {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .task-info {
+      flex-grow: 1;
+      margin-right: 10px;
+    }
+    .task-actions button {
+      margin-left: 5px;
+      padding: 4px 8px;
+      font-size: 0.9em;
+    }
+    .priority-high {
+      border-left: 4px solid #ff4444;
+    }
+    .priority-medium {
+      border-left: 4px solid #ffbb33;
+    }
+    .priority-low {
+      border-left: 4px solid #00C851;
+    }
+    .category-tag {
+      font-size: 0.8em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #eee;
+      margin-left: 5px;
+    }
+    .due-date {
+      font-size: 0.8em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="welcome-section">
+        <h2>✨ Welcome back, <span id="username" class="username-highlight"></span>!</h2>
+        <p class="today-date">Today is <span id="currentDate"></span></p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="task-type-selector">
+      <button class="task-type-btn active" onclick="showTaskInput('today')">📝 Add Today's Task</button>
+      <button class="task-type-btn" onclick="showTaskInput('upcoming')">🗓️ Schedule Future Task</button>
+    </div>
+
+    <div class="task-input-group">
+      <input type="text" id="taskInput" placeholder="Enter a task...">
+      <input type="date" id="dueDate">
+      <select id="priority">
+        <option value="low">Low Priority</option>
+        <option value="medium">Medium Priority</option>
+        <option value="high">High Priority</option>
+      </select>
+      <select id="category">
+        <option value="personal">Personal</option>
+        <option value="work">Work</option>
+        <option value="shopping">Shopping</option>
+        <option value="other">Other</option>
+      </select>
+      <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="searchInput" class="search-box" placeholder="Search tasks...">
+      <select id="filterPriority" onchange="filterTasks()">
+        <option value="">All Priorities</option>
+        <option value="high">High Priority</option>
+        <option value="medium">Medium Priority</option>
+        <option value="low">Low Priority</option>
+      </select>
+      <select id="filterCategory" onchange="filterTasks()">
+        <option value="">All Categories</option>
+        <option value="personal">Personal</option>
+        <option value="work">Work</option>
+        <option value="shopping">Shopping</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    // Check if user is logged in and setup welcome screen
+    function checkAuth() {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser) {
+        window.location.replace('login.html');
+        return false;
+      }
+      document.getElementById('username').textContent = currentUser;
+      
+      // Set current date in welcome message
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const today = new Date();
+      document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+      return true;
+    }
+
+    // Handle task type selection
+    function showTaskInput(type) {
+      const buttons = document.querySelectorAll('.task-type-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      if (type === 'today') {
+        setTodayDate();
+        document.querySelector('.task-type-btn:first-child').classList.add('active');
+      } else {
+        document.getElementById('dueDate').value = '';
+        document.querySelector('.task-type-btn:last-child').classList.add('active');
+      }
+      
+      document.getElementById('taskInput').focus();
+    }
+    
+    // Check authentication immediately
+    if (!checkAuth()) {
+      // Stop executing rest of the script if not authenticated
+      throw new Error('Not authenticated');
+    }
+
+    // Load tasks from localStorage
+    let tasks = [];
+    loadTasks();
+
+    function loadTasks() {
+      const users = JSON.parse(localStorage.getItem('users')) || {};
+      tasks = users[currentUser]?.tasks || [];
+      filterTasks();
+    }
+
+    function saveTasks() {
+      const users = JSON.parse(localStorage.getItem('users')) || {};
+      users[currentUser].tasks = tasks;
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput");
+      const taskText = taskInput.value.trim();
+      const dueDate = document.getElementById("dueDate").value;
+      const priority = document.getElementById("priority").value;
+      const category = document.getElementById("category").value;
+
+      if (taskText === "") return;
+
+      const task = {
+        id: Date.now(),
+        text: taskText,
+        done: false,
+        dueDate: dueDate,
+        priority: priority,
+        category: category,
+        createdAt: new Date().toISOString()
+      };
+
+      tasks.push(task);
+      saveTasks();
+      filterTasks();
+      taskInput.value = "";
+      setTodayDate();
+    }
+
+    function removeTask(taskId) {
+      tasks = tasks.filter(task => task.id !== taskId);
+      saveTasks();
+      filterTasks();
+    }
+
+    function toggleTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.done = !task.done;
+        saveTasks();
+        filterTasks();
+      }
+    }
+
+    function editTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const newText = prompt("Edit task:", task.text);
+      if (newText === null || newText.trim() === "") return;
+
+      task.text = newText.trim();
+      saveTasks();
+      filterTasks();
+    }
+
+    function filterTasks() {
+      const searchText = document.getElementById("searchInput").value.toLowerCase();
+      const priorityFilter = document.getElementById("filterPriority").value;
+      const categoryFilter = document.getElementById("filterCategory").value;
+
+      const filteredTasks = tasks.filter(task => {
+        const matchesSearch = task.text.toLowerCase().includes(searchText);
+        const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+        const matchesCategory = !categoryFilter || task.category === categoryFilter;
+        return matchesSearch && matchesPriority && matchesCategory;
+      });
+
+      displayTasks(filteredTasks);
+    }
+
+    function displayTasks(tasksToDisplay) {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
+
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+      
+      // Group tasks by date
+      const tasksByDate = {
+        today: [],
+        upcoming: [],
+        past: []
+      };
+
+      tasksToDisplay.forEach(task => {
+        const taskDate = task.dueDate ? new Date(task.dueDate) : null;
+        if (!taskDate) {
+          tasksByDate.upcoming.push(task);
+        } else {
+          taskDate.setHours(0, 0, 0, 0);
+          if (taskDate.getTime() === today.getTime()) {
+            tasksByDate.today.push(task);
+          } else if (taskDate < today) {
+            tasksByDate.past.push(task);
+          } else {
+            tasksByDate.upcoming.push(task);
+          }
+        }
+      });
+
+      // Sort each group by priority
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      const sortByPriority = (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority];
+
+      // Add Today's Tasks
+      if (tasksByDate.today.length > 0) {
+        const todayHeader = document.createElement('h3');
+        todayHeader.textContent = '📅 Today\'s Tasks';
+        todayHeader.style.marginTop = '20px';
+        taskList.appendChild(todayHeader);
+        
+        tasksByDate.today.sort(sortByPriority).forEach(createTaskElement);
+      }
+
+      // Add Upcoming Tasks
+      if (tasksByDate.upcoming.length > 0) {
+        const upcomingHeader = document.createElement('h3');
+        upcomingHeader.textContent = '📊 Upcoming Tasks';
+        upcomingHeader.style.marginTop = '20px';
+        taskList.appendChild(upcomingHeader);
+        
+        tasksByDate.upcoming.sort((a, b) => {
+          if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
+          if (a.dueDate) return -1;
+          if (b.dueDate) return 1;
+          return sortByPriority(a, b);
+        }).forEach(createTaskElement);
+      }
+
+      // Add Past Tasks
+      if (tasksByDate.past.length > 0) {
+        const pastHeader = document.createElement('h3');
+        pastHeader.textContent = '⏰ Past Due Tasks';
+        pastHeader.style.marginTop = '20px';
+        taskList.appendChild(pastHeader);
+        
+        tasksByDate.past.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate)).forEach(createTaskElement);
+      }
+    }
+
+    function createTaskElement(task) {
+        const li = document.createElement("li");
+        li.className = `priority-${task.priority}${task.done ? ' done' : ''}`;
+        
+        const taskInfo = document.createElement("div");
+        taskInfo.className = "task-info";
+        taskInfo.innerHTML = `
+          ${task.text}
+          <span class="category-tag">${task.category}</span>
+          ${task.dueDate ? `<span class="due-date">Due: ${task.dueDate}</span>` : ''}
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "task-actions";
+        actions.innerHTML = `
+          <button onclick="toggleTask(${task.id})">${task.done ? '↩️' : '✓'}</button>
+          <button onclick="editTask(${task.id})">✏️</button>
+          <button onclick="removeTask(${task.id})">❌</button>
+        `;
+
+        li.appendChild(taskInfo);
+        li.appendChild(actions);
+        taskList.appendChild(li);
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('currentUser');
+      window.location.href = 'login.html';
+    }
+
+    // Event listeners
+    document.getElementById("taskInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") addTask();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", filterTasks);
+
+    // Set today's date by default
+    function setTodayDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      document.getElementById("dueDate").value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Initial load
+    loadTasks();
+    setTodayDate();
+  </script>
+</body>
+</html>
