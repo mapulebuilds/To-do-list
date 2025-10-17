@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motivational Quotes</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f9; margin:0; display:flex; align-items:center; justify-content:center; height:100vh; }
+    .card { background:#fff; padding:24px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.08); width:90%; max-width:600px; }
+    h1 { margin-top:0; color:#2c3e50; }
+    blockquote { margin:16px 0; padding:12px 16px; background:#f0f6ff; border-left:6px solid #4CAF50; border-radius:6px; }
+    .author { display:block; text-align:right; margin-top:6px; font-size:0.9em; color:#555; }
+    .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+    button { padding:10px 14px; border-radius:6px; border:none; cursor:pointer; background:#4CAF50; color:#fff; }
+    .skip { background:#888; }
+  </style>
+</head>
+<body>
+  <div class="card" id="welcomeCard">
+    <h1 id="greeting">Hello!</h1>
+    <div id="quoteArea">
+      <!-- Quote inserted here -->
+    </div>
+    <div class="actions" style="justify-content:center; margin-top:20px;">
+      <button onclick="goToTodo()" style="background:#1976d2;">To-Do List</button>
+    </div>
+  </div>
+
+  <script>
+    const quotes = [
+      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+      { text: "Small daily improvements are the key to staggering long-term results.", author: "James Clear" },
+      { text: "You don\'t have to be perfect to start, but you have to start to be great.", author: "Zig Ziglar" },
+      { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
+      { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" }
+    ];
+
+    // Pick a random quote on load and render it once
+    let idx = Math.floor(Math.random() * quotes.length);
+
+    function renderQuote(i) {
+      const q = quotes[i % quotes.length];
+      const area = document.getElementById('quoteArea');
+      area.innerHTML = `<blockquote>\n  <p>${q.text}</p>\n  <span class="author">— ${q.author}</span>\n</blockquote>`;
+    }
+
+
+    function goToTodo() {
+      if (!localStorage.getItem('currentUser')) { window.location.replace('login.html'); return; }
+      window.location.replace('index.html');
+    }
+
+    function checkAndRender() {
+      const user = localStorage.getItem('currentUser');
+      if (!user) { window.location.replace('login.html'); return; }
+      document.getElementById('greeting').textContent = `Hello, ${user}!`;
+      renderQuote(idx);
+    }
+
+  // Render initial quote and greeting on load
+  checkAndRender();
+  </script>
+</body>
+</html>

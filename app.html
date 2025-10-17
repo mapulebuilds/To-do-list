@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List App</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: radial-gradient(circle at top left, #1f2933 0%, #111827 40%, #0b1120 100%);
+        color: #e5e7eb;
+        height: 100vh;
+        overflow: hidden;
+    }
+    .app-container {
+        display: flex;
+        height: 100vh;
+    }
+    .app-container.hidden {
+        display: none !important;
+    }
+    /* Sidebar Styles */
+    #sideMenu {
+        width: 280px;
+        background: rgba(17, 24, 39, 0.85);
+        border-right: 1px solid rgba(148, 163, 184, 0.08);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        height: 100vh;
+        transition: transform 0.3s ease;
+        z-index: 10;
+    }
+    #sideMenu.collapsed {
+        transform: translateX(-280px);
+    }
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 5px;
+    }
+    .user-profile:hover {
+        background: rgba(148, 163, 184, 0.08);
+    }
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 15px;
+    }
+    .user-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+    .sidebar-nav {
+        padding: 20px 10px;
+        flex: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: #cbd5f5;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    .nav-item:hover {
+        background: rgba(59, 130, 246, 0.12);
+        color: #f8fafc;
+        transform: translateX(4px);
+    }
+    .nav-item.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(14, 165, 233, 0.25));
+        color: #f8fafc;
+        font-weight: 600;
+    }
+    .nav-icon {
+        margin-right: 10px;
+        font-size: 18px;
+    }
+    .nav-section {
+        margin-top: 30px;
+    }
+    .nav-section-title {
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+    .project-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #cbd5f5;
+        transition: background 0.2s, color 0.2s;
+    }
+    .project-item:hover {
+        background: rgba(37, 99, 235, 0.12);
+        color: #f8fafc;
+    }
+    .project-color {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    /* Main Content Area */
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+    }
+    .main-content.expanded {
+        margin-left: 0;
+    }
+    .top-bar {
+        padding: 18px 32px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .menu-btn {
+        font-size: 24px;
+        cursor: pointer;
+        color: #cbd5f5;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 24px;
+        height: 20px;
+        justify-content: center;
+    }
+    .menu-btn span {
+        display: block;
+        width: 100%;
+        height: 3px;
+        background: #38bdf8;
+        border-radius: 2px;
+        transition: all 0.3s;
+    }
+    .menu-btn:hover span {
+        background: #0ea5e9;
+    }
+    .search-bar {
+        flex: 1;
+        max-width: 500px;
+        margin: 0 20px;
+    }
+    .search-bar input {
+        width: 100%;
+        padding: 8px 15px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 8px;
+        font-size: 14px;
+        background: rgba(15, 23, 42, 0.75);
+        color: #e5e7eb;
+    }
+    .search-bar input:focus {
+        outline: none;
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        background: rgba(15, 23, 42, 0.95);
+    }
+    .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 40px 50px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.9));
+    }
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        color: #f8fafc;
+    }
+    .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin: 30px 0 15px 0;
+        text-transform: uppercase;
+    }
+    /* Task Styles */
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-radius: 14px;
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(148, 163, 184, 0.08);
+        gap: 16px;
+        margin-bottom: 12px;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .task-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+        border-color: rgba(56, 189, 248, 0.3);
+    }
+    .task-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(148, 163, 184, 0.4);
+        border-radius: 50%;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .task-checkbox:hover {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.15);
+    }
+    .task-checkbox.completed {
+        background: #22d3ee;
+        border-color: #22d3ee;
+    }
+    .task-checkbox.completed::after {
+        content: '✓';
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .task-content {
+        flex: 1;
+    }
+    .task-name {
+        font-size: 15px;
+        color: #e5e7eb;
+        margin-bottom: 6px;
+        transition: all 0.2s;
+    }
+    .task-name.completed {
+        text-decoration: line-through;
+        color: #64748b;
+    }
+    .task-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .task-time {
+        color: #058527;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .task-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .task-action-btn {
+        padding: 6px 10px;
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #e2e8f0;
+        transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .task-action-btn:hover {
+        background: rgba(56, 189, 248, 0.2);
+        border-color: rgba(56, 189, 248, 0.4);
+        transform: translateY(-1px);
+    }
+    .add-task-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 16px;
+        color: #38bdf8;
+        cursor: pointer;
+        font-size: 14px;
+        border: 1px dashed rgba(56, 189, 248, 0.35);
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 12px;
+        width: 100%;
+        text-align: left;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .add-task-btn:hover {
+        color: #f8fafc;
+        background: rgba(56, 189, 248, 0.18);
+        border-color: rgba(56, 189, 248, 0.5);
+    }
+    .hidden {
+        display: none !important;
+    }
+    /* Login/Signup Styles */
+    .auth-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .auth-container.hidden {
+        display: none !important;
+    }
+    .auth-box {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        width: 400px;
+    }
+    .auth-box h2 {
+        margin-bottom: 30px;
+        color: #202020;
+        font-size: 28px;
+    }
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    input:focus {
+        outline: none;
+        border-color: #d44b47;
+    }
+    button.primary-btn {
+        width: 100%;
+        padding: 12px;
+        background: #d44b47;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    button.primary-btn:hover {
+        background: #c23d39;
+    }
+    .auth-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+    .auth-link a {
+        color: #d44b47;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    a {
+        color: #d44b47;
+    }
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    .modal {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        width: 90%;
+        max-width: 450px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #202020;
+    }
+    .modal-body {
+        margin-bottom: 20px;
+    }
+    .modal-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .modal-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .modal-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .modal-row .modal-input {
+        margin-bottom: 0;
+    }
+    .modal-error {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 8px;
+        min-height: 16px;
+    }
+    .modal-input:focus {
+        outline: none;
+        border-color: #d44b47;
+    }
+    .modal-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    .modal-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .modal-btn-primary {
+        background: #d44b47;
+        color: white;
+    }
+    .modal-btn-primary:hover {
+        background: #c23d39;
+    }
+    .modal-btn-secondary {
+        background: #f3f3f3;
+        color: #666;
+    }
+    .modal-btn-secondary:hover {
+        background: #e8e8e8;
+    }
+    .alert-modal {
+        text-align: center;
+    }
+    .alert-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+    .alert-message {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div class="auth-container" id="loginPage">
+    <div class="auth-box">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button class="primary-btn" onclick="login()">Login</button>
+        <div class="auth-link">
+            Don't have an account? <a onclick="showSignUp()">Sign up</a>
+        </div>
+    </div>
+</div>
+
+<!-- Sign Up Page -->
+<div class="auth-container hidden" id="signUpPage">
+    <div class="auth-box">
+        <h2>Sign Up</h2>
+        <input type="text" id="firstName" placeholder="Full Name" required>
+        <input type="text" id="surname" placeholder="Surname" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <button class="primary-btn" onclick="signUp()">Create Account</button>
+        <div class="auth-link">
+            Already have an account? <a onclick="showLogin()">Login</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main App -->
+<div class="app-container hidden" id="dashboard">
+    <!-- Sidebar -->
+    <div id="sideMenu" class="collapsed">
+        <div class="sidebar-header">
+            <div class="user-profile" onclick="toggleUserMenu()">
+                <div class="user-avatar" id="userAvatar">D</div>
+                <div class="user-name" id="userName">User</div>
+            </div>
+        </div>
+        
+        <div class="sidebar-nav">
+            <a href="#" class="nav-item" onclick="showDashboardHome()">
+                <span class="nav-icon">🏠</span>
+                Dashboard
+            </a>
+            <a href="#" class="nav-item" onclick="showToday()">
+                <span class="nav-icon">📅</span>
+                Today
+            </a>
+            <a href="#" class="nav-item" onclick="showUpcoming()">
+                <span class="nav-icon">📆</span>
+                Upcoming
+            </a>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">My Projects</div>
+                <div class="project-item" onclick="showProject('fitness')" data-project="fitness">
+                    <div class="project-color" style="background: #ff9933;"></div>
+                    # Fitness
+                </div>
+                <div class="project-item" onclick="showProject('groceries')" data-project="groceries">
+                    <div class="project-color" style="background: #4caf50;"></div>
+                    # Groceries
+                </div>
+                <div class="project-item" onclick="showProject('appointments')" data-project="appointments">
+                    <div class="project-color" style="background: #2196f3;"></div>
+                    # Appointments
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Team</div>
+                <div class="project-item" onclick="showProject('team')" data-project="team">
+                    <div class="project-color" style="background: #9c27b0;"></div>
+                    # Team Projects
+                </div>
+            </div>
+            
+            <a href="#" class="nav-item" onclick="logout()" style="margin-top: 30px;">
+                <span class="nav-icon">🚪</span>
+                Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content expanded">
+        <div class="top-bar">
+            <div class="menu-btn" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search tasks..." onkeyup="searchTasks()">
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <h1 class="page-title" id="pageTitle">Today</h1>
+            <div id="dateDisplay" style="font-size: 14px; color: #94a3b8; margin-bottom: 20px; letter-spacing: 0.05em; text-transform: uppercase;"></div>
+            
+            <!-- Motivational Quote Section -->
+            <div id="quotesSection" style="background: linear-gradient(135deg, rgba(14, 116, 144, 0.85), rgba(8, 47, 73, 0.95)); padding: 28px; border-radius: 16px; margin-bottom: 32px; box-shadow: 0 24px 45px rgba(8, 47, 73, 0.45); border: 1px solid rgba(125, 211, 252, 0.22);">
+                <div style="font-size: 18px; font-weight: 600; color: #f0f9ff; margin-bottom: 10px; letter-spacing: 0.04em;">💡 Daily Motivation</div>
+                <div id="quote" style="font-style: italic; color: #e0f2fe; font-size: 16px; line-height: 1.7;"></div>
+            </div>
+            
+            <!-- Projects Overview Section -->
+            <div id="projectsOverview" style="margin-bottom: 30px;">
+                <div style="font-size: 18px; font-weight: 600; color: #f8fafc; margin-bottom: 18px;">📊 My Projects</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
+                    <div onclick="showProject('fitness')" style="background: rgba(15, 23, 42, 0.72); padding: 22px; border-radius: 18px; border: 1px solid rgba(255, 153, 51, 0.2); cursor: pointer; transition: all 0.25s; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 24px 50px rgba(15, 23, 42, 0.55)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 20px 40px rgba(15, 23, 42, 0.35)'">
+                        <div style="font-size: 26px; margin-bottom: 10px;">🏋️</div>
+                        <div style="font-weight: 600; color: #f8fafc; margin-bottom: 6px;">Fitness</div>
+                        <div style="font-size: 12px; color: #94a3b8;" id="fitnessCount">0 tasks</div>
+                    </div>
+                    <div onclick="showProject('groceries')" style="background: rgba(15, 23, 42, 0.72); padding: 22px; border-radius: 18px; border: 1px solid rgba(76, 175, 80, 0.2); cursor: pointer; transition: all 0.25s; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 24px 50px rgba(15, 23, 42, 0.55)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 20px 40px rgba(15, 23, 42, 0.35)'">
+                        <div style="font-size: 26px; margin-bottom: 10px;">🛒</div>
+                        <div style="font-weight: 600; color: #f8fafc; margin-bottom: 6px;">Groceries</div>
+                        <div style="font-size: 12px; color: #94a3b8;" id="groceriesCount">0 tasks</div>
+                    </div>
+                    <div onclick="showProject('appointments')" style="background: rgba(15, 23, 42, 0.72); padding: 22px; border-radius: 18px; border: 1px solid rgba(33, 150, 243, 0.2); cursor: pointer; transition: all 0.25s; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 24px 50px rgba(15, 23, 42, 0.55)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 20px 40px rgba(15, 23, 42, 0.35)'">
+                        <div style="font-size: 26px; margin-bottom: 10px;">📅</div>
+                        <div style="font-weight: 600; color: #f8fafc; margin-bottom: 6px;">Appointments</div>
+                        <div style="font-size: 12px; color: #94a3b8;" id="appointmentsCount">0 tasks</div>
+                    </div>
+                    <div onclick="showProject('team')" style="background: rgba(17, 24, 39, 0.75); padding: 24px; border-radius: 16px; cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.08); backdrop-filter: blur(8px);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 16px 40px -16px rgba(157, 78, 221, 0.7)'" onmouseout="this.style.transform=''; this.style.boxShadow='none'">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(157, 78, 221, 0.4), rgba(168, 85, 247, 0)); opacity: 0.8; pointer-events: none;"></div>
+                        <div style="position: relative;">
+                            <div style="font-size: 28px; margin-bottom: 12px;">👥</div>
+                            <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 6px; font-size: 16px;">Team Projects</div>
+                            <div style="font-size: 13px; color: #cbd5f5;" id="teamCount">0 tasks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tasks Container -->
+            <div id="tasksContainer">
+                <div class="section-title">Tasks</div>
+                <div id="taskList"></div>
+                
+                <button class="add-task-btn" onclick="addNewTask()">
+                    <span style="color: #d44b47; font-size: 18px;">+</span>
+                    Add task
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal" id="modalContent">
+        <!-- Dynamic content will be inserted here -->
+    </div>
+</div>
+
+<script>
+const quotes = [
+    "Believe you can and you're halfway there.",
+    "Dream big. Work hard. Stay humble.",
+    "Push yourself, because no one else will do it for you.",
+    "The secret of getting ahead is getting started.",
+    "Success is not final, failure is not fatal."
+];
+
+let currentProject = 'today';
+
+// Modal Functions
+function showModal(content) {
+    document.getElementById('modalContent').innerHTML = content;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function hideModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    window.promptCallback = null;
+    window.confirmCallback = null;
+    window.taskFormContext = null;
+}
+
+function showAlert(message, icon = '✓') {
+    const content = `
+        <div class="alert-modal">
+            <div class="alert-icon">${icon}</div>
+            <div class="alert-message">${message}</div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-primary" onclick="hideModal()">OK</button>
+            </div>
+        </div>
+    `;
+    showModal(content);
+}
+
+function showConfirm(message, onConfirm) {
+    const content = `
+        <div class="modal-header">Confirm</div>
+        <div class="modal-body">
+            <div class="alert-message">${message}</div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="hideModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="confirmAction()">Confirm</button>
+        </div>
+    `;
+    window.confirmCallback = onConfirm;
+    showModal(content);
+}
+
+function confirmAction() {
+    if (window.confirmCallback) {
+        window.confirmCallback();
+        window.confirmCallback = null;
+    }
+    hideModal();
+}
+
+function showPrompt(title, placeholder, onSubmit, defaultValue = '') {
+    const content = `
+        <div class="modal-header">${title}</div>
+        <div class="modal-body">
+            <input type="text" class="modal-input" id="promptInput" placeholder="${placeholder}" value="${defaultValue}" autofocus>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="hideModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="submitPrompt()">Save</button>
+        </div>
+    `;
+    window.promptCallback = onSubmit;
+    showModal(content);
+    setTimeout(() => {
+        const input = document.getElementById('promptInput');
+        if (input) {
+            input.focus();
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitPrompt();
+            });
+        }
+    }, 100);
+}
+
+function submitPrompt() {
+    const input = document.getElementById('promptInput');
+    const value = input ? input.value.trim() : '';
+    if (value && window.promptCallback) {
+        window.promptCallback(value);
+        window.promptCallback = null;
+    }
+    hideModal();
+}
+
+function showTaskForm(title, task = {}, onSubmit, options = {}) {
+    const {
+        requireDueDate = false,
+        requireTime = false,
+        showDate = true,
+        showTime = true,
+        defaultDate = null
+    } = options;
+
+    const safeName = escapeHtml(task.name || '');
+    const initialDate = task.dueDate || defaultDate || '';
+    const initialTime = task.dueTime || '';
+    const safeDate = escapeHtml(initialDate);
+    const safeTime = escapeHtml(initialTime);
+    const dateLabel = requireDueDate ? 'Due Date *' : 'Due Date';
+    const timeLabel = requireTime ? 'Due Time *' : 'Due Time';
+
+    let scheduleMarkup = '';
+    if (showDate && showTime) {
+        scheduleMarkup = `
+            <div class="modal-row">
+                <div style="flex: 1;">
+                    <label class="modal-label" for="taskDateInput">${dateLabel}</label>
+                    <input type="date" class="modal-input" id="taskDateInput" value="${safeDate}">
+                </div>
+                <div style="flex: 1;">
+                    <label class="modal-label" for="taskTimeInput">${timeLabel}</label>
+                    <input type="time" class="modal-input" id="taskTimeInput" value="${safeTime}">
+                </div>
+            </div>
+        `;
+    } else if (showDate) {
+        scheduleMarkup = `
+            <div style="margin-bottom: 10px;">
+                <label class="modal-label" for="taskDateInput">${dateLabel}</label>
+                <input type="date" class="modal-input" id="taskDateInput" value="${safeDate}">
+            </div>
+        `;
+    } else if (showTime) {
+        scheduleMarkup = `
+            <div style="margin-bottom: 10px;">
+                <label class="modal-label" for="taskTimeInput">${timeLabel}</label>
+                <input type="time" class="modal-input" id="taskTimeInput" value="${safeTime}">
+            </div>
+        `;
+    }
+
+    const content = `
+        <div class="modal-header">${title}</div>
+        <div class="modal-body">
+            <label class="modal-label" for="taskNameInput">Task Name</label>
+            <input type="text" class="modal-input" id="taskNameInput" placeholder="Give your task a title" value="${safeName}" autofocus>
+            ${scheduleMarkup}
+            <div class="modal-error" id="taskFormError"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="hideModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="submitTaskForm()">Save</button>
+        </div>
+    `;
+
+    window.taskFormContext = {
+        onSubmit,
+        requireDueDate,
+        requireTime,
+        showDate,
+        showTime,
+        defaultDate,
+        existingDate: task.dueDate || null,
+        existingTime: task.dueTime || null
+    };
+
+    showModal(content);
+    setTimeout(() => {
+        const input = document.getElementById('taskNameInput');
+        if (input) {
+            input.focus();
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitTaskForm();
+            });
+        }
+    }, 100);
+}
+
+function submitTaskForm() {
+    const nameInput = document.getElementById('taskNameInput');
+    const dateInput = document.getElementById('taskDateInput');
+    const timeInput = document.getElementById('taskTimeInput');
+    const errorEl = document.getElementById('taskFormError');
+
+    const name = nameInput ? nameInput.value.trim() : '';
+    const dueDateInputValue = dateInput ? dateInput.value : '';
+    const dueTimeInputValue = timeInput ? timeInput.value : '';
+
+    if (!window.taskFormContext) {
+        hideModal();
+        return;
+    }
+
+    const {
+        onSubmit,
+        requireDueDate,
+        requireTime,
+        showDate,
+        showTime,
+        defaultDate,
+        existingDate,
+        existingTime
+    } = window.taskFormContext;
+
+    if (!name) {
+        if (errorEl) errorEl.textContent = 'Please give the task a name.';
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    let dueDate = showDate ? dueDateInputValue : (existingDate || defaultDate || '');
+    let dueTime = showTime ? dueTimeInputValue : (existingTime || '');
+
+    if (requireDueDate && !dueDate) {
+        if (errorEl) errorEl.textContent = 'Upcoming tasks need a due date.';
+        if (dateInput) dateInput.focus();
+        return;
+    }
+
+    if (requireTime && !dueTime) {
+        if (errorEl) errorEl.textContent = 'Please choose a time for this task.';
+        if (timeInput) timeInput.focus();
+        return;
+    }
+
+    if (errorEl) errorEl.textContent = '';
+
+    if (typeof onSubmit === 'function') {
+        onSubmit({
+            name,
+            dueDate: dueDate || null,
+            dueTime: dueTime || null
+        });
+    }
+
+    window.taskFormContext = null;
+    hideModal();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') {
+        hideModal();
+    }
+});
+
+function toggleMenu() {
+    const menu = document.getElementById("sideMenu");
+    const mainContent = document.querySelector(".main-content");
+    
+    menu.classList.toggle("collapsed");
+    mainContent.classList.toggle("expanded");
+}
+
+function showSignUp() {
+    const loginPage = document.getElementById("loginPage");
+    const signUpPage = document.getElementById("signUpPage");
+    loginPage.style.display = "none";
+    signUpPage.classList.remove("hidden");
+    signUpPage.style.display = "flex";
+}
+
+function showLogin() {
+    const loginPage = document.getElementById("loginPage");
+    const signUpPage = document.getElementById("signUpPage");
+    signUpPage.style.display = "none";
+    loginPage.classList.remove("hidden");
+    loginPage.style.display = "flex";
+}
+
+function signUp() {
+    const name = document.getElementById("firstName").value;
+    const surname = document.getElementById("surname").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirm = document.getElementById("confirmPassword").value;
+
+    if (!name || !surname || !email || !password || !confirm) {
+        showAlert("Please fill in all fields!", "⚠️");
+        return;
+    }
+
+    if (password !== confirm) {
+        showAlert("Passwords do not match!", "⚠️");
+        return;
+    }
+
+    const user = { name, surname, email, password };
+    localStorage.setItem("user_" + email, JSON.stringify(user));
+    showAlert("Sign-up successful! You can now log in.", "✓");
+    setTimeout(() => {
+        hideModal();
+        showLogin();
+    }, 1500);
+}
+
+function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if (!email || !password) {
+        showAlert("Please enter both email and password!", "⚠️");
+        return;
+    }
+
+    const stored = localStorage.getItem("user_" + email);
+    if (!stored) {
+        showAlert("User not found. Please sign up first.", "⚠️");
+        return;
+    }
+    const user = JSON.parse(stored);
+    if (user.password !== password) {
+        showAlert("Incorrect password.", "⚠️");
+        return;
+    }
+
+    localStorage.setItem("loggedInUser", email);
+    showDashboard(user);
+}
+
+function showDashboard(user) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("signUpPage").style.display = "none";
+    document.getElementById("dashboard").classList.remove("hidden");
+    document.getElementById("dashboard").style.display = "flex";
+
+    // Set user info
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("userAvatar").textContent = user.name.charAt(0).toUpperCase();
+    
+    // Set quote
+    document.getElementById("quote").textContent = `"${quotes[Math.floor(Math.random()*quotes.length)]}"`;
+
+    // Show dashboard home view (with quotes and projects)
+    document.getElementById("pageTitle").textContent = "Dashboard";
+    document.getElementById("quotesSection").style.display = "block";
+    document.getElementById("projectsOverview").style.display = "block";
+    document.getElementById("tasksContainer").style.display = "none";
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    updateProjectCounts();
+}
+
+function updateDateTime() {
+    const now = new Date();
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    const dateStr = now.toLocaleDateString('en-US', options);
+    document.getElementById("dateDisplay").textContent = dateStr;
+}
+
+function showDashboardHome() {
+    document.getElementById("pageTitle").textContent = "Dashboard";
+    document.getElementById("quotesSection").style.display = "block";
+    document.getElementById("projectsOverview").style.display = "block";
+    document.getElementById("tasksContainer").style.display = "none";
+    updateActiveNav();
+    updateProjectCounts();
+}
+
+function showToday() {
+    currentProject = 'today';
+    document.getElementById("pageTitle").textContent = "Today";
+    document.getElementById("quotesSection").style.display = "none";
+    document.getElementById("projectsOverview").style.display = "none";
+    document.getElementById("tasksContainer").style.display = "block";
+    updateActiveNav();
+    loadTasks();
+}
+
+function showUpcoming() {
+    currentProject = 'upcoming';
+    document.getElementById("pageTitle").textContent = "Upcoming";
+    document.getElementById("quotesSection").style.display = "none";
+    document.getElementById("projectsOverview").style.display = "none";
+    document.getElementById("tasksContainer").style.display = "block";
+    updateActiveNav();
+    loadTasks();
+}
+
+function showInbox() {
+    currentProject = 'inbox';
+    document.getElementById("pageTitle").textContent = "Inbox";
+    document.getElementById("quotesSection").style.display = "none";
+    document.getElementById("projectsOverview").style.display = "none";
+    document.getElementById("tasksContainer").style.display = "block";
+    updateActiveNav();
+    loadTasks();
+}
+
+function showProject(projectName) {
+    currentProject = projectName;
+    const projectNames = {
+        'fitness': 'Fitness',
+        'groceries': 'Groceries',
+        'appointments': 'Appointments',
+        'team': 'Team Projects'
+    };
+    document.getElementById("pageTitle").textContent = projectNames[projectName] || projectName;
+    document.getElementById("quotesSection").style.display = "none";
+    document.getElementById("projectsOverview").style.display = "none";
+    document.getElementById("tasksContainer").style.display = "block";
+    updateActiveNav();
+    loadTasks();
+}
+
+function updateActiveNav() {
+    // Remove all active classes
+    document.querySelectorAll('.nav-item, .project-item').forEach(item => {
+        item.classList.remove('active');
+    });
+}
+
+function addNewTask() {
+    const formOptions = getTaskFormSettings(currentProject);
+    showTaskForm('Add New Task', {}, ({ name, dueDate, dueTime }) => {
+        const email = localStorage.getItem("loggedInUser");
+        let tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+
+        if (!tasks[currentProject]) {
+            tasks[currentProject] = [];
+        }
+
+        const newTask = {
+            id: Date.now(),
+            name,
+            completed: false,
+            project: currentProject,
+            dueDate: dueDate || formOptions.defaultDate || null,
+            dueTime,
+            time: dueTime || null
+        };
+
+        tasks[currentProject].push(newTask);
+        localStorage.setItem("tasks_" + email, JSON.stringify(tasks));
+        loadTasks();
+        showAlert('Task added successfully!', '✓');
+    }, formOptions);
+}
+
+function loadTasks() {
+    const email = localStorage.getItem("loggedInUser");
+    const tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+    const projectTasks = tasks[currentProject] || [];
+    const orderedTasks = [...projectTasks].sort((a, b) => {
+        const aTime = getTaskSortValue(a);
+        const bTime = getTaskSortValue(b);
+        return aTime - bTime;
+    });
+    
+    // Get search query
+    const searchQuery = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : '';
+    
+    // Filter tasks by search query
+    const filteredTasks = orderedTasks.filter(task => 
+        (task.name || '').toLowerCase().includes(searchQuery)
+    );
+    
+    const container = document.getElementById("taskList");
+    container.innerHTML = "";
+    
+    if (filteredTasks.length === 0 && searchQuery) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No tasks found matching "' + searchQuery + '"</div>';
+        return;
+    }
+    
+    filteredTasks.forEach((task, index) => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task-item";
+        
+        const completedClass = task.completed ? 'completed' : '';
+        const dueLabel = formatTaskDue(task);
+        const safeTaskName = escapeHtml(task.name || '');
+        const safeDueLabel = escapeHtml(dueLabel);
+        
+        taskDiv.innerHTML = `
+            <div class="task-checkbox ${completedClass}" onclick="toggleTask(${task.id})"></div>
+            <div class="task-content">
+                <div class="task-name ${completedClass}">${safeTaskName}</div>
+                ${dueLabel ? `<div class="task-meta"><span class="task-time">⏰ ${safeDueLabel}</span></div>` : ''}
+            </div>
+            <div class="task-actions">
+                <button class="task-action-btn" onclick="editTask(${task.id})">✏️</button>
+                <button class="task-action-btn" onclick="removeTask(${task.id})">🗑️</button>
+            </div>
+        `;
+        
+        container.appendChild(taskDiv);
+    });
+    
+    // Update project counts
+    updateProjectCounts();
+}
+
+function searchTasks() {
+    loadTasks();
+}
+
+function getTodayDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getTaskSortValue(task) {
+    if (task && task.dueDate) {
+        const dateString = task.dueDate + 'T' + (task.dueTime || '23:59');
+        const value = Date.parse(dateString);
+        if (!Number.isNaN(value)) {
+            return value;
+        }
+    }
+    if (task && task.dueTime) {
+        const fallbackDate = getTodayDateString();
+        const value = Date.parse(`${fallbackDate}T${task.dueTime}`);
+        if (!Number.isNaN(value)) {
+            return value;
+        }
+    }
+    return Number.MAX_SAFE_INTEGER;
+}
+
+function formatTaskDue(task) {
+    if (!task) return '';
+
+    const todayStr = getTodayDateString();
+
+    if (task.dueDate) {
+        const parsedDate = Date.parse(task.dueDate + 'T00:00:00');
+        const isToday = task.dueDate === todayStr;
+        const formattedDate = Number.isNaN(parsedDate)
+            ? task.dueDate
+            : new Date(parsedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        if (task.dueTime) {
+            const timeLabel = formatTimeLabel(task.dueTime);
+            if (isToday) {
+                return currentProject === 'today' ? timeLabel : `Today • ${timeLabel}`;
+            }
+            return `${formattedDate} • ${timeLabel}`;
+        }
+
+        if (isToday) {
+            return 'Today';
+        }
+
+        return formattedDate;
+    }
+
+    if (task.dueTime) {
+        return formatTimeLabel(task.dueTime);
+    }
+
+    if (task.time) {
+        return task.time;
+    }
+
+    return '';
+}
+
+function formatTimeLabel(timeValue) {
+    if (!timeValue) return '';
+    const parsed = Date.parse(`1970-01-01T${timeValue}`);
+    if (Number.isNaN(parsed)) {
+        return timeValue;
+    }
+    return new Date(parsed).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function escapeHtml(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function getTaskFormSettings(project) {
+    if (project === 'today') {
+        return {
+            showDate: false,
+            showTime: true,
+            requireTime: true,
+            defaultDate: getTodayDateString()
+        };
+    }
+
+    if (project === 'upcoming') {
+        return {
+            showDate: true,
+            showTime: true,
+            requireDueDate: true
+        };
+    }
+
+    return {
+        showDate: true,
+        showTime: true
+    };
+}
+
+function updateProjectCounts() {
+    const email = localStorage.getItem("loggedInUser");
+    const tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+    
+    const projects = ['fitness', 'groceries', 'appointments', 'team'];
+    projects.forEach(project => {
+        const count = (tasks[project] || []).length;
+        const countEl = document.getElementById(project + 'Count');
+        if (countEl) {
+            countEl.textContent = `${count} task${count !== 1 ? 's' : ''}`;
+        }
+    });
+}
+
+function toggleTask(taskId) {
+    const email = localStorage.getItem("loggedInUser");
+    let tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+    
+    if (tasks[currentProject]) {
+        const task = tasks[currentProject].find(t => t.id === taskId);
+        if (task) {
+            task.completed = !task.completed;
+            localStorage.setItem("tasks_" + email, JSON.stringify(tasks));
+            loadTasks();
+        }
+    }
+}
+
+function editTask(taskId) {
+    const email = localStorage.getItem("loggedInUser");
+    let tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+    
+    if (tasks[currentProject]) {
+        const task = tasks[currentProject].find(t => t.id === taskId);
+        if (task) {
+            const formOptions = getTaskFormSettings(currentProject);
+            showTaskForm('Edit Task', task, ({ name, dueDate, dueTime }) => {
+                task.name = name;
+                task.dueDate = dueDate || formOptions.defaultDate || null;
+                task.dueTime = dueTime;
+                task.time = dueTime || null;
+                localStorage.setItem("tasks_" + email, JSON.stringify(tasks));
+                loadTasks();
+                showAlert('Task updated successfully!', '✓');
+            }, formOptions);
+        }
+    }
+}
+
+function removeTask(taskId) {
+    showConfirm("Are you sure you want to delete this task?", () => {
+        const email = localStorage.getItem("loggedInUser");
+        let tasks = JSON.parse(localStorage.getItem("tasks_" + email)) || {};
+        
+        if (tasks[currentProject]) {
+            tasks[currentProject] = tasks[currentProject].filter(t => t.id !== taskId);
+            localStorage.setItem("tasks_" + email, JSON.stringify(tasks));
+            loadTasks();
+            showAlert('Task deleted successfully!', '✓');
+        }
+    });
+}
+
+function newList() {
+    addNewTask();
+}
+
+function toggleUserMenu() {
+    // Placeholder for user menu
+}
+
+function logout() {
+    showConfirm("Are you sure you want to logout?", () => {
+        localStorage.removeItem("loggedInUser");
+        location.reload();
+    });
+}
+
+// Check if user is already logged in
+window.onload = function() {
+    const loggedInUser = localStorage.getItem("loggedInUser");
+    if (loggedInUser) {
+        const stored = localStorage.getItem("user_" + loggedInUser);
+        if (stored) {
+            const user = JSON.parse(stored);
+            showDashboard(user);
+        }
+    }
+};
+</script>
+
+</body>
+</html>

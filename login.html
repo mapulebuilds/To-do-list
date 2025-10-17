@@ -94,7 +94,8 @@
 
             if (users[username] && users[username].password === password) {
                 localStorage.setItem('currentUser', username);
-                window.location.replace('index.html');
+                // After login, show motivational quotes page first
+                window.location.replace('quotes.html');
             } else {
                 alert('Invalid username or password');
             }
@@ -125,9 +126,9 @@
             localStorage.clear();
         }
         
-        // Check if user is already logged in
+        // If user is already logged in, show motivational quotes page first
         if (localStorage.getItem('currentUser')) {
-            window.location.replace('index.html');
+            window.location.replace('quotes.html');
         }
     </script>
 </body>

@@ -8,28 +8,39 @@
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       min-height: 100vh;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      display: block;
+      height: 100vh;
+      width: 100vw;
     }
     .container {
       background: white;
       padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 1400px;
+      max-height: calc(100vh - 20px);
+      margin: 10px auto;
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+      margin-bottom: 0;
+      padding-bottom: 12px;
       border-bottom: 2px solid #e0e0e0;
+      flex: 0 0 auto;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 5;
     }
     .welcome-section {
       flex-grow: 1;
@@ -82,6 +93,9 @@
       border-radius: 4px;
       cursor: pointer;
     }
+      /* Pomodoro styles were moved to pomodoro.html */
+    
+    
     .task-input-container {
       display: grid;
       grid-template-columns: 1fr auto auto;
@@ -92,6 +106,7 @@
       display: grid;
       grid-template-columns: 2fr 1fr 1fr auto;
       gap: 10px;
+      align-items: center;
     }
     input, select {
       padding: 8px;
@@ -114,6 +129,7 @@
       gap: 10px;
       margin-bottom: 15px;
     }
+    /* Pomodoro removed; styles moved/removed */
     .search-box {
       flex-grow: 1;
     }
@@ -121,6 +137,24 @@
       list-style: none;
       padding: 0;
       margin: 0;
+      overflow: auto;
+      flex: 1 1 auto;
+      padding-right: 10px; /* small gutter for scrollbar */
+    }
+
+    /* Responsive: narrower screens */
+    @media (max-width: 600px) {
+      .container { margin: 12px; padding: 12px; }
+      .task-input-group { grid-template-columns: 1fr; gap: 8px; }
+      .task-type-selector { gap: 8px; }
+    }
+
+    /* Desktop enhancements */
+    @media (min-width: 1000px) {
+      .container { max-width: 1600px; padding: 32px; }
+      .welcome-section h2 { font-size: 2rem; }
+      .task-type-btn { padding: 14px; font-size: 1.05rem; }
+      .task-input-group input, .task-input-group select { padding: 10px; }
     }
     li {
       padding: 10px;
@@ -138,20 +172,6 @@
     .task-info {
       flex-grow: 1;
       margin-right: 10px;
-    }
-    .task-actions button {
-      margin-left: 5px;
-      padding: 4px 8px;
-      font-size: 0.9em;
-    }
-    .priority-high {
-      border-left: 4px solid #ff4444;
-    }
-    .priority-medium {
-      border-left: 4px solid #ffbb33;
-    }
-    .priority-low {
-      border-left: 4px solid #00C851;
     }
     .category-tag {
       font-size: 0.8em;
@@ -215,19 +235,25 @@
       </select>
     </div>
 
+    <!-- Pomodoro removed -->
+
     <ul id="taskList"></ul>
   </div>
 
   <script>
+    // Global currentUser (set after authentication check)
+    let currentUser = null;
+
     // Check if user is logged in and setup welcome screen
     function checkAuth() {
-      const currentUser = localStorage.getItem('currentUser');
-      if (!currentUser) {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
         window.location.replace('login.html');
         return false;
       }
+      currentUser = stored;
       document.getElementById('username').textContent = currentUser;
-      
+
       // Set current date in welcome message
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       const today = new Date();
@@ -263,12 +289,15 @@
 
     function loadTasks() {
       const users = JSON.parse(localStorage.getItem('users')) || {};
+      if (!currentUser) return (tasks = []);
       tasks = users[currentUser]?.tasks || [];
       filterTasks();
     }
 
     function saveTasks() {
+      if (!currentUser) return;
       const users = JSON.parse(localStorage.getItem('users')) || {};
+      users[currentUser] = users[currentUser] || { password: '', tasks: [] };
       users[currentUser].tasks = tasks;
       localStorage.setItem('users', JSON.stringify(users));
     }
@@ -435,8 +464,7 @@
         li.appendChild(taskInfo);
         li.appendChild(actions);
         taskList.appendChild(li);
-      });
-    }
+      }
 
     function logout() {
       localStorage.removeItem('currentUser');
@@ -462,6 +490,17 @@
     // Initial load
     loadTasks();
     setTodayDate();
+    
+    // Desktop: add header shadow when task list scrolls
+    (function setupHeaderShadow(){
+      const taskList = document.getElementById('taskList');
+      const header = document.querySelector('.header');
+      if (!taskList || !header) return;
+      taskList.addEventListener('scroll', () => {
+        if (taskList.scrollTop > 6) header.style.boxShadow = '0 4px 10px rgba(0,0,0,0.08)';
+        else header.style.boxShadow = 'none';
+      });
+    })();
   </script>
 </body>
 </html>
